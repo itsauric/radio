@@ -1,3 +1,1 @@
-import RadioPlayer from './RadioPlayer';
-export default { RadioPlayer };
-export { RadioPlayer };
+export * from './radio';
