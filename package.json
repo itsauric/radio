@@ -1,6 +1,6 @@
 {
   "name": "discord.js-radio",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "An npm module that uses radio-browser to play a radio with discord.js",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
