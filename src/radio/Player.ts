@@ -18,23 +18,65 @@ interface RadioOptions {
 	voice: VoiceBasedChannel;
 }
 
-// interface Status {
-// 	PLAYER_PLAYING: null;
-// }
-
 export class RadioPlayer {
-	// public status: Status | null;
 	private connection: VoiceConnection | null;
 	private player: AudioPlayer | null;
-	private radioData: Station | null;
+	private data: Station | null;
 
 	public constructor() {
-		// this.status = null;
-		this.connection = null;
 		this.player = createAudioPlayer();
-		this.radioData = null;
+		this.connection = null;
+		this.data = null;
 	}
 
+	/**
+	 * Plays the given query in the voice or stage channel
+	 * @param {RadioOptions} options The options to provide for the radio
+	 */
+	public async play(options: RadioOptions): Promise<void> {
+		if (!this.connection) await this.connect(options.voice);
+		if (!this.player) this.player = createAudioPlayer();
+		if (this.playing) throw new Error('Player is already playing!');
+
+		const data = await RadioBrowser.searchStations({ name: options.query }).then((data) => data[0]);
+		if (!data) throw new Error('No radio stations found!');
+
+		const resource = createAudioResource(data.url_resolved as Readable, { inputType: StreamType.Arbitrary });
+
+		this.player.play(resource);
+
+		this.data = data;
+		this.connection?.subscribe(this.player);
+		this.connection?.on(VoiceConnectionStatus.Disconnected, async (_oldState, _newState) => {
+			try {
+				await Promise.race([
+					entersState(this.connection!, VoiceConnectionStatus.Signalling, 5_000),
+					entersState(this.connection!, VoiceConnectionStatus.Connecting, 5_000)
+				]);
+			} catch (error) {
+				this.connection?.destroy();
+				this.connection = null;
+				this.player?.stop();
+			}
+		});
+
+		await entersState(this.player, AudioPlayerStatus.Playing, 5000);
+
+		return this.data;
+	}
+
+	/**
+	 * @returns True or false, depending on if the player is playing
+	 */
+	public get playing() {
+		if (AudioPlayerStatus.Playing === 'playing') return true;
+		return false;
+	}
+
+	/**
+	 * Connects to the voice or stage channel
+	 * @param {VoiceBasedChannel} voice The voice or stage channel
+	 */
 	public async connect(voice: VoiceBasedChannel): Promise<void> {
 		this.connection = joinVoiceChannel({
 			channelId: voice.id,
@@ -50,56 +92,22 @@ export class RadioPlayer {
 		}
 	}
 
-	public async play(options: RadioOptions): Promise<void> {
-		const { query, voice } = options;
-
-		if (!this.connection) await this.connect(voice);
-		if (!this.player) this.player = createAudioPlayer();
-		if (this.player.state.status !== AudioPlayerStatus.Idle) {
-			// this.status?.PLAYER_PLAYING = true;
-			throw new Error('Player is already playing!');
-		}
-
-		// this.status?.PLAYER_PLAYING = false;
-
-		const radioData = await RadioBrowser.searchStations({ name: query }).then((data) => data[0]);
-
-		if (!radioData) throw new Error('No radio stations found!');
-
-		const resource = createAudioResource(radioData.url_resolved as Readable, { inputType: StreamType.Arbitrary });
-
-		this.player.play(resource);
-		this.radioData = radioData;
-		this.connection?.subscribe(this.player);
-		// this.status?.PLAYER_PLAYING = true;
-		this.connection?.on(VoiceConnectionStatus.Disconnected, async (_oldState, _newState) => {
-			try {
-				await Promise.race([
-					entersState(this.connection!, VoiceConnectionStatus.Signalling, 5_000),
-					entersState(this.connection!, VoiceConnectionStatus.Connecting, 5_000)
-				]);
-				// Seems to be reconnecting to a new channel - ignore disconnect
-			} catch (error) {
-				// Seems to be a real disconnect which SHOULDN'T be recovered from
-				this.connection?.destroy();
-				this.connection = null;
-				this.player?.stop();
-			}
-		});
-
-		await entersState(this.player, AudioPlayerStatus.Playing, 5000);
-	}
-
+	/**
+	 * @returns Disconnects the player
+	 */
 	public async disconnect(): Promise<void> {
 		if (this.connection) {
 			await entersState(this.connection, VoiceConnectionStatus.Destroyed, 5000);
 			this.connection = null;
 			this.player?.stop();
-			this.radioData = null;
+			this.data = null;
 		}
 	}
 
-	public getRadioData(): Station | null {
-		return this.radioData;
+	/**
+	 * @returns The radio data
+	 */
+	public current(): Station | null {
+		return this.data;
 	}
 }
