@@ -1,2 +1,2 @@
-export { connect } from './connect';
-export { play } from './play';
+import { RadioPlayer } from './Player';
+export { RadioPlayer };

@@ -6,13 +6,12 @@ An npm module that uses radio-browser to play a radio with discord.js [this is a
 
 ```js
 const member = interaction.member as GuildMember;
-const searchterm = 'jazz';
-const by = 'tag';
+const query = 'BBC Radio 1';
 
 try {
 	const connection = await connect(member.voice.channel!);
-	const player = play(interaction, { by, searchterm });
-	connection.subscribe(await player);
+	const player = await play(interaction, { query });
+	connection.subscribe(player);
 	return interaction.reply('working');
 } catch (e) {
 	console.log(e);
