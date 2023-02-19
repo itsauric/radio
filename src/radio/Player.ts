@@ -69,7 +69,7 @@ export class RadioPlayer {
 	 * @returns True or false, depending on if the player is playing
 	 */
 	public get playing() {
-		if (AudioPlayerStatus.Playing === 'playing') return true;
+		if (this.player?.state.status !== AudioPlayerStatus.Idle) return true;
 		return false;
 	}
 
