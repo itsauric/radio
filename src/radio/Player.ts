@@ -34,11 +34,35 @@ export class RadioPlayer {
 	 * @param {RadioOptions} options The options to provide for the radio
 	 */
 	public async play(options: RadioOptions): Promise<void> {
+		const data = await RadioBrowser.searchStations({ name: options.query }).then((data) => data[0]);
+
+		if (this.playing) {
+			this.player?.stop();
+			const newResource = createAudioResource(data.url_resolved as Readable, { inputType: StreamType.Arbitrary });
+			this.player?.play(newResource);
+			this.data = data;
+			this.connection?.subscribe(this.player!);
+			this.connection?.on(VoiceConnectionStatus.Disconnected, async (_oldState, _newState) => {
+				try {
+					await Promise.race([
+						entersState(this.connection!, VoiceConnectionStatus.Signalling, 5_000),
+						entersState(this.connection!, VoiceConnectionStatus.Connecting, 5_000)
+					]);
+				} catch (error) {
+					this.connection?.destroy();
+					this.connection = null;
+					this.player?.stop();
+				}
+			});
+
+			await entersState(this.player!, AudioPlayerStatus.Playing, 5000);
+
+			return this.data;
+		}
+
 		if (!this.connection) await this.connect(options.voice);
 		if (!this.player) this.player = createAudioPlayer();
-		if (this.playing) throw new Error('Player is already playing!');
 
-		const data = await RadioBrowser.searchStations({ name: options.query }).then((data) => data[0]);
 		if (!data) throw new Error('No radio stations found!');
 
 		const resource = createAudioResource(data.url_resolved as Readable, { inputType: StreamType.Arbitrary });
