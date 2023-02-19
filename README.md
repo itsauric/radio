@@ -16,17 +16,19 @@ import { RadioPlayer } from 'discord.js-radio';
 
 const member = <Interaction>.member as <GuildMember>;
 const query = 'BBC Radio One'
+const data = <Client>.radio.current().name || 'Unknown Radio';
 
 try {
-	// await <Client>.radio.connect(member.voice.channel); -> his can be used however <Client>.radio.play(...) will automatically run this
-	if (<Client>.radio.playing) return <Interaction>.reply({ content: 'A radio is already playing', ephemeral: true });
 	await <Client>.radio.play({ query, voice: member.voice.channel! });
+	if (<Client>.radio.playing) {
+		const newData = <Client>.radio.current().name || 'Unknown Radio';
+		return <Interaction>.reply({ content: `Switching to: **${newData}** from **${data}**` });
+	}
 
-	const data = <Client>.radio.current();
-	return <Interaction>.reply(data.name || 'Unknown radio');
-} catch (e) {
-	console.log(e);
-	return <Interaction>.reply('An error has occurred!');
+	return <Interaction>.reply(`Now playing: **${data}**`);
+} catch (error) {
+	console.log(error);
+	return <Interaction>.reply('No radios were found...');
 }
 ```
 
