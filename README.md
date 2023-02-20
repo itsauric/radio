@@ -9,19 +9,20 @@ This is an experimental module, do not expect this to work out of the box...
 ## Example Usage
 
 ```ts
+// In your main file
 import { RadioPlayer } from 'discord.js-radio';
 <Client>.radio = new RadioPlayer();
 
-// In your radio command file
+// In your command file
 
 const member = <Interaction>.member as <GuildMember>;
 const query = 'BBC Radio One'
-const data = <Client>.radio.current().name || 'Unknown Radio';
+const data = <Client>.radio.current()?.name || 'Unknown Radio';
 
 try {
 	await <Client>.radio.play({ query, voice: member.voice.channel! });
 	if (<Client>.radio.playing) {
-		const newData = <Client>.radio.current().name || 'Unknown Radio';
+		const newData = <Client>.radio.current()?.name || 'Unknown Radio';
 		return <Interaction>.reply({ content: `Switching to: **${newData}** from **${data}**` });
 	}
 
