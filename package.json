@@ -1,6 +1,6 @@
 {
-  "name": "discord.js-radio",
-  "version": "1.2.0",
+  "name": "@auric/radio",
+  "version": "1.2.1",
   "description": "An npm module that uses radio-browser to play a radio with discord.js",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,7 @@
     "/dist"
   ],
   "keywords": [
-    "discord.js-radio",
+    "@auric/radio",
     "discord.js",
     "discord",
     "radio-browser",
@@ -18,7 +18,7 @@
   "license": "UNLICENSE",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ItsAuric/discord.js-radio.git"
+    "url": "git+https://github.com/itsauric/radio.git"
   },
   "dependencies": {
     "@discordjs/voice": "^0.14.0",
