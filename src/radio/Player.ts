@@ -22,30 +22,14 @@ interface RadioOptions {
 export class RadioPlayer {
 	public connection: VoiceConnection | null;
 	public player: AudioPlayer | null;
-	public resource: AudioResource<Station>;
+	public resource: AudioResource | null;
 	public data: Station | null;
 
-	public constructor(connection: VoiceConnection, resource: AudioResource<Station>, data: Station) {
+	public constructor() {
 		this.player = createAudioPlayer();
-		this.connection = connection;
-		this.resource = resource;
-		this.data = data;
-
-		this.connection?.on(VoiceConnectionStatus.Disconnected, async (_oldState, _newState) => {
-			try {
-				await Promise.race([
-					entersState(this.connection!, VoiceConnectionStatus.Signalling, 5_000),
-					entersState(this.connection!, VoiceConnectionStatus.Connecting, 5_000)
-				]);
-			} catch (error) {
-				this.connection?.destroy();
-				this.player?.stop();
-			}
-		});
-
-		this.player.on(AudioPlayerStatus.Playing, () => {
-			console.log('The audio player has started playing!');
-		});
+		this.connection = null;
+		this.resource = null;
+		this.data = null;
 	}
 
 	/**
