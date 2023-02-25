@@ -11,13 +11,9 @@ import {
 	VoiceConnectionStatus
 } from '@discordjs/voice';
 import type { VoiceBasedChannel } from 'discord.js';
-import RadioBrowser, { Station } from 'radio-browser';
+import RadioBrowser from 'radio-browser';
 import type { Readable } from 'stream';
-
-interface RadioOptions {
-	query: string;
-	voice: VoiceBasedChannel;
-}
+import type { RadioOptions, Station } from './Structure';
 
 export class RadioPlayer {
 	public connection: VoiceConnection | null;
@@ -54,9 +50,20 @@ export class RadioPlayer {
 		return this.playResource(data, this.resource);
 	}
 
+	/**
+	 * Searches the radio via the query provided
+	 * @param {String} query The query to provide for the radio
+	 */
 	public async search(query: string) {
-		const data = await RadioBrowser.searchStations({ name: query }).then((data) => data[0]);
-		return data.url_resolved;
+		const radio = await RadioBrowser.searchStations({ name: query })
+			.then((data) => {
+				return data[0];
+			})
+			.catch((error) => {
+				if (error) return false;
+			});
+
+		this.data = radio;
 	}
 
 	/**
